@@ -92,5 +92,5 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# Mkdocs stuff
-docs/site/
+# Mkdocs site build
+site/
