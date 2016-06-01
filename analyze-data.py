@@ -8,14 +8,14 @@ alias analyze="python ~/git/helpers/analyze-data.py"
 '''
 import os
 PATH = '/Users/kathrynschuler/Dropbox/Research/analyses'
+os.chdir(PATH)
 
 
-RAWDATA = raw_input('Have you added the raw data? ')
-PROCESSEDDATA = raw_input("Have you preprocessed the data? ")
+RAWDATA = raw_input("Have you added the raw data? (y/n) ")
+PROCESSEDDATA = raw_input("Have you preprocessed the data? (y/n) ")
 
-if RAWDATA and PROCESSEDDATA :
+if RAWDATA == 'y' and PROCESSEDDATA == 'y' :
     print 'opening jupyter...'
-    os.system("cd "+PATH)
     os.system("source activate jupyter")
     os.system("jupyter notebook")
 else :
