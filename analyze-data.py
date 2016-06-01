@@ -4,6 +4,8 @@ This is a script that I run whenever I want to analyze data.  It requires that I
 
 alias analyze="python ~/git/helpers/analyze-data.py"
 
+run it by typing "analyze" in the terminal
+
 
 '''
 import os
