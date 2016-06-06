@@ -12,4 +12,4 @@ wordList = [
 
 mkdir(path)
 for word in wordList :
-    system("say -v"+voice+" -r "+rate+" "+word+" -o "+path+word+".wav")
+    system("say -v"+voice+" -r "+rate+" "+word+" -o "+path+word+".wav " +"--data-format=LEF32@32000")
