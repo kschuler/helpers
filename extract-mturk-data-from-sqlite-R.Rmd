@@ -47,7 +47,7 @@ To find out the available tables in your `participants.db`, you can use the `dbL
 dbListTables(mturk.data)
 ```
 
-This shows four data tables in my participants.db. Each data table corresponds to the data for particular experiment. You can access a specific table using the [SQL engine](http://rmarkdown.rstudio.com/authoring_knitr_engines.html#sql): `{sql connection=mturk.data, output.var="mturk"}`. 
+This shows four data tables in my participants.db. Each data table corresponds to the data for a particular experiment. You can access a specific table using the [SQL engine](http://rmarkdown.rstudio.com/authoring_knitr_engines.html#sql): `{sql connection=mturk.data, output.var="mturk"}`. 
 
 The parameter `connection=mturk.data` connects you to the database you defined above and `output.var="mturk"` assigns the results of the SQL query to an R data frame. I select all fields from the `0155v1` data table.
 
@@ -135,5 +135,5 @@ trialdata <- lapply(datastring, get_trial_data) %>%
 ```
 
 
-
+`trialdata` now contains all of the experiment data as a data frame.
 

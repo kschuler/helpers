@@ -151,7 +151,7 @@ mturk.data &lt;- dbConnect(RSQLite::SQLite(), dbname = DATABASE)</code></pre>
 <pre class="r"><code># List the tables you have in your database
 dbListTables(mturk.data)</code></pre>
 <pre><code>## [1] &quot;0103-mturk-data&quot; &quot;0154&quot;            &quot;0155v1&quot;          &quot;0156&quot;</code></pre>
-<p>This shows four data tables in my participants.db. Each data table corresponds to the data for particular experiment. You can access a specific table using the <a href="http://rmarkdown.rstudio.com/authoring_knitr_engines.html#sql">SQL engine</a>: <code>{sql connection=mturk.data, output.var=&quot;mturk&quot;}</code>.</p>
+<p>This shows four data tables in my participants.db. Each data table corresponds to the data for a particular experiment. You can access a specific table using the <a href="http://rmarkdown.rstudio.com/authoring_knitr_engines.html#sql">SQL engine</a>: <code>{sql connection=mturk.data, output.var=&quot;mturk&quot;}</code>.</p>
 <p>The parameter <code>connection=mturk.data</code> connects you to the database you defined above and <code>output.var=&quot;mturk&quot;</code> assigns the results of the SQL query to an R data frame. I select all fields from the <code>0155v1</code> data table.</p>
 <pre class="sql"><code>/* {sql connection=mturk.data, output.var=&quot;mturk&quot;} */
 SELECT * FROM &quot;0155v1&quot;</code></pre>
@@ -247,6 +247,7 @@ datastring &lt;- mturk.data$datastring
 # get_trial_data from each JSON object (each subject) in datastring and make single dataframe
 trialdata &lt;- lapply(datastring, get_trial_data) %&gt;%
   bind_rows()</code></pre>
+<p><code>trialdata</code> now contains all of the experiment data as a data frame.</p>
 </div>
 
 
