@@ -1,0 +1,136 @@
+---
+title: "Retrieving data from SQLLite database"
+author: "K. Schuler"
+date: "October 2016"
+output:
+  html_document:
+    toc: yes
+  html_notebook:
+    toc: yes
+---
+
+# Introduction
+This notebook covers how to retrieve experiment data from a SQLLite database using R.  psiTurk stores your experiment data as a data table in a SQLLite database (`participants.db`).  The main data from an experiment is stored in the `datastring` field.  The `datastring` field is structured as a JSON object with `data`, `questiondata`, and `eventdata` sub-objects. See [psiTurk documentation](http://psiturk.readthedocs.io/en/latest/retrieving.html) for more details about the data structure. 
+
+Here I'm going to retrive the `data` sub-object to extract the trial-by-trial data stored in `trialdata`.
+
+Note: `knitr` can now execute code in other languages besides R.  This notebook makes use of the [SQL engine](http://rmarkdown.rstudio.com/authoring_knitr_engines.html#sql) to select a data table from the SQLLite database and store it as an R data frame.  The SQL engine is available only in knitr (v1.14) or later. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Connect to the database
+
+To retrieve the data, we must first connect to the database.  Start by loading the required libraries.
+
+```{r message = FALSE}
+library(DBI)
+library(knitr)
+library(dplyr)
+library(jsonlite)
+```
+
+Then use the `dbConnect` command to connect to `participants.db`.
+
+```{r message = TRUE}
+# Connect to the database specified in DATABASE
+DATABASE <- 'participants.db'
+mturk.data <- dbConnect(RSQLite::SQLite(), dbname = DATABASE)
+
+```
+
+To find out the available tables in your `participants.db`, you can use the `dbListTables` command.
+
+```{r}
+# List the tables you have in your database
+dbListTables(mturk.data)
+```
+
+Here I have four data tables in my participants.db. Each data table corresponds to the data for particular experiment. You can access a specific table using the SQL engine: `{sql connection=mturk.data, output.var="mturk"}`. Here, `connection=mturk.data` connects you to the database you defined above and `output.var="mturk"` assigns the results of the SQL query to an R data frame. I select all fields from the `0155v1` data table.
+
+
+```{sql, connection=mturk.data, echo=TRUE, output.var="mturk"}
+/* {sql connection=mturk.data, output.var="mturk"} */
+SELECT * FROM "0155v1"
+```
+
+
+# Retrieve data
+
+To retrieve the data, the first thing we want to do is filter out some of the particpants that we do not want to include.  We only want to include participants who completed the study, which corresponds to status codes 3, 4, 5, and 7. 
+
+And we also want to be able to exclude particular workers by their id number.  This comes up for me sometimes when workers participate in more than one of my experiments (even when I ask them not to do that).
+
+```{r}
+# mturk status codes:
+  # NOT_ACCEPTED = 0
+  # ALLOCATED = 1
+  # STARTED = 2
+  # COMPLETED = 3
+  # SUBMITTED = 4
+  # CREDITED = 5
+  # QUITEARLY = 6
+  # BONUSED = 7
+
+# list of acceptable status codes
+good.status = c(3, 4, 5, 7)
+
+# list of workers you want to exclude (e.g. participated in other experiments even though you asked them not to)
+# I use workerid and not uniqueid because I need to exclude based on participation in other experiments
+exclude.workers = c()
+
+# include only workers that have a good status code and aren't in our exclude list
+mturk.data <- filter(mturk, status %in% good.status, !(workerid %in% exclude.workers))
+
+
+```
+
+I like to inspect the data at this point to see how many workers are now included in each condition.
+ 
+```{r}
+# Add a column that is more descriptive of cond (0, 1) and make a table 
+# summarising how many participants were in each group
+subj.info <- mutate(mturk.data, Condition = ifelse(cond == 0, "Condition 1", "Condition 2")) %>%
+    group_by(Condition, cond, counterbalance) %>%
+    summarise(N = n()) 
+
+# show results in a pretty table
+kable(subj.info)
+
+```
+
+
+
+```{r}
+# a function that pulls the trialdata from the data object of datastring
+get_trial_data <- function(json_object){
+  # reads the datastring JSON object into an R data frame
+  df <- jsonlite::fromJSON(json_object, simplifyDataFrame = TRUE)
+  # stores data$trialdata from this data string as `data`
+  data <- df$data$trialdata
+  # adds the participant's uniqueid in case it wasn't added in experiment    
+  data['uniqueid'] = df$data$uniqueid
+  # removes the df object and returns data
+  rm(df)
+  return(data)
+}
+
+# check to make sure your json_object is valid with
+# jsonlite::validate()
+```
+
+
+```{r}
+# get the datastring field from the data table
+datastring <- mturk.data$datastring
+
+# get_trial_data from each JSON object (each subject) in datastring and make single dataframe
+trialdata <- lapply(datastring, get_trial_data) %>%
+  bind_rows()
+
+```
+
+
+
+
