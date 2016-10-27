@@ -151,14 +151,15 @@ mturk.data &lt;- dbConnect(RSQLite::SQLite(), dbname = DATABASE)</code></pre>
 <pre class="r"><code># List the tables you have in your database
 dbListTables(mturk.data)</code></pre>
 <pre><code>## [1] &quot;0103-mturk-data&quot; &quot;0154&quot;            &quot;0155v1&quot;          &quot;0156&quot;</code></pre>
-<p>Here I have four data tables in my participants.db. Each data table corresponds to the data for particular experiment. You can access a specific table using the SQL engine: <code>{sql connection=mturk.data, output.var=&quot;mturk&quot;}</code>. Here, <code>connection=mturk.data</code> connects you to the database you defined above and <code>output.var=&quot;mturk&quot;</code> assigns the results of the SQL query to an R data frame. I select all fields from the <code>0155v1</code> data table.</p>
+<p>This shows have four data tables in my participants.db. Each data table corresponds to the data for particular experiment. You can access a specific table using the <a href="http://rmarkdown.rstudio.com/authoring_knitr_engines.html#sql">SQL engine</a>: <code>{sql connection=mturk.data, output.var=&quot;mturk&quot;}</code>.</p>
+<p>The parameter <code>connection=mturk.data</code> connects you to the database you defined above and <code>output.var=&quot;mturk&quot;</code> assigns the results of the SQL query to an R data frame. I select all fields from the <code>0155v1</code> data table.</p>
 <pre class="sql"><code>/* {sql connection=mturk.data, output.var=&quot;mturk&quot;} */
 SELECT * FROM &quot;0155v1&quot;</code></pre>
 </div>
 <div id="retrieve-data" class="section level1">
 <h1>Retrieve data</h1>
 <p>To retrieve the data, the first thing we want to do is filter out some of the particpants that we do not want to include. We only want to include participants who completed the study, which corresponds to status codes 3, 4, 5, and 7.</p>
-<p>And we also want to be able to exclude particular workers by their id number. This comes up for me sometimes when workers participate in more than one of my experiments (even when I ask them not to do that).</p>
+<p>And we also want to be able to exclude particular workers by their id numbers. This comes up for me sometimes when workers participate in more than one of my experiments (even when I ask them not to do that).</p>
 <pre class="r"><code># mturk status codes:
   # NOT_ACCEPTED = 0
   # ALLOCATED = 1
@@ -178,7 +179,7 @@ exclude.workers = c()
 
 # include only workers that have a good status code and aren't in our exclude list
 mturk.data &lt;- filter(mturk, status %in% good.status, !(workerid %in% exclude.workers))</code></pre>
-<p>I like to inspect the data at this point to see how many workers are now included in each condition.</p>
+<p>I like to inspect the data at this point to see how many workers are now included in each condition / counterbalance.</p>
 <pre class="r"><code># Add a column that is more descriptive of cond (0, 1) and make a table 
 # summarising how many participants were in each group
 subj.info &lt;- mutate(mturk.data, Condition = ifelse(cond == 0, &quot;Condition 1&quot;, &quot;Condition 2&quot;)) %&gt;%
@@ -223,6 +224,7 @@ kable(subj.info)</code></pre>
 </tr>
 </tbody>
 </table>
+<p>We want to take each json object in datastring and read it in as a dataframe; extract the data$trialdata to get each subject’s trial data and then add their <code>uniqueid</code>.</p>
 <pre class="r"><code># a function that pulls the trialdata from the data object of datastring
 get_trial_data &lt;- function(json_object){
   # reads the datastring JSON object into an R data frame
@@ -238,6 +240,7 @@ get_trial_data &lt;- function(json_object){
 
 # check to make sure your json_object is valid with
 # jsonlite::validate()</code></pre>
+<p>Apply the get_trial_data to the datastring and then bindrows() to create one dataframe.</p>
 <pre class="r"><code># get the datastring field from the data table
 datastring &lt;- mturk.data$datastring
 

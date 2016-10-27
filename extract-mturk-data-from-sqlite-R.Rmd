@@ -47,7 +47,9 @@ To find out the available tables in your `participants.db`, you can use the `dbL
 dbListTables(mturk.data)
 ```
 
-Here I have four data tables in my participants.db. Each data table corresponds to the data for particular experiment. You can access a specific table using the SQL engine: `{sql connection=mturk.data, output.var="mturk"}`. Here, `connection=mturk.data` connects you to the database you defined above and `output.var="mturk"` assigns the results of the SQL query to an R data frame. I select all fields from the `0155v1` data table.
+This shows have four data tables in my participants.db. Each data table corresponds to the data for particular experiment. You can access a specific table using the [SQL engine](http://rmarkdown.rstudio.com/authoring_knitr_engines.html#sql): `{sql connection=mturk.data, output.var="mturk"}`. 
+
+The parameter `connection=mturk.data` connects you to the database you defined above and `output.var="mturk"` assigns the results of the SQL query to an R data frame. I select all fields from the `0155v1` data table.
 
 
 ```{sql, connection=mturk.data, echo=TRUE, output.var="mturk"}
@@ -60,7 +62,7 @@ SELECT * FROM "0155v1"
 
 To retrieve the data, the first thing we want to do is filter out some of the particpants that we do not want to include.  We only want to include participants who completed the study, which corresponds to status codes 3, 4, 5, and 7. 
 
-And we also want to be able to exclude particular workers by their id number.  This comes up for me sometimes when workers participate in more than one of my experiments (even when I ask them not to do that).
+And we also want to be able to exclude particular workers by their id numbers.  This comes up for me sometimes when workers participate in more than one of my experiments (even when I ask them not to do that).
 
 ```{r}
 # mturk status codes:
@@ -86,7 +88,7 @@ mturk.data <- filter(mturk, status %in% good.status, !(workerid %in% exclude.wor
 
 ```
 
-I like to inspect the data at this point to see how many workers are now included in each condition.
+I like to inspect the data at this point to see how many workers are now included in each condition / counterbalance.
  
 ```{r}
 # Add a column that is more descriptive of cond (0, 1) and make a table 
@@ -100,7 +102,7 @@ kable(subj.info)
 
 ```
 
-
+We want to take each json object in datastring and read it in as a dataframe; extract the data$trialdata to get each subject's trial data and then add their `uniqueid`.
 
 ```{r}
 # a function that pulls the trialdata from the data object of datastring
@@ -120,6 +122,7 @@ get_trial_data <- function(json_object){
 # jsonlite::validate()
 ```
 
+Apply the get_trial_data to the datastring and then bindrows() to create one dataframe.
 
 ```{r}
 # get the datastring field from the data table
